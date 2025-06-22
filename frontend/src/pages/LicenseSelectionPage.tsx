@@ -1,36 +1,40 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { licenses } from '../data/licenses'
+import React from "react";
+import { Link } from "react-router-dom";
+import { licenses } from "../data/licenses.ts";
 
 const LicenseSelectionPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="text-black py-6">
+      <header className="bg-blue-600 text-white py-6">
         <h1 className="text-2xl text-center font-bold">
           Wähle deine Prüfung
         </h1>
       </header>
-      <main className="flex-grow container mx-auto px-4 py-8 space-y-4">
+      <main className="flex-grow px-4 py-8 space-y-6">
         {licenses.map(({ id, name, desc, icon: Icon }) => (
           <Link
             to={`/${id}`}
             key={id}
-            className="flex items-center justify-between p-4
-                       bg-white rounded-lg shadow hover:shadow-md
-                       transition"
+            className="
+              flex items-center justify-between p-6
+              bg-white rounded-lg shadow
+              transform hover:shadow-lg hover:-translate-y-0.5
+              transition
+            "
           >
             <div className="flex items-center space-x-4">
-              <Icon className="w-6 h-6 text-primary-600" />
+              <Icon className="w-8 h-8 text-blue-600" />
               <div>
-                <h2 className="font-semibold">{name}</h2>
+                <h2 className="font-semibold text-lg">{name}</h2>
                 <p className="text-sm text-gray-500">{desc}</p>
               </div>
             </div>
+            <div className="text-blue-600 font-semibold">Start</div>
           </Link>
         ))}
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default LicenseSelectionPage
+export default LicenseSelectionPage;
