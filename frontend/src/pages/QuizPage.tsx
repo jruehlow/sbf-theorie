@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Link,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { Question } from "../types.ts";
 import { licenses } from "../data/licenses.ts";
@@ -14,14 +10,14 @@ const API_URL = "http://localhost:8000";
 
 async function fetchQuestions(
   licenseId: string,
-  categoryId: string
+  categoryId: string,
 ): Promise<Question[]> {
   const res = await fetch(
-    `${API_URL}/api/questions/?license=${licenseId}&category=${categoryId}`
+    `${API_URL}/api/questions/?license=${licenseId}&category=${categoryId}`,
   );
   if (!res.ok) {
     throw new Error(
-      `Fehler beim Laden: ${res.status} ${res.statusText}`
+      `Fehler beim Laden: ${res.status} ${res.statusText}`,
     );
   }
   return res.json();
@@ -37,8 +33,8 @@ const QuizPage: React.FC = () => {
   const license = licenses.find((l) => l.id === licenseId);
   const category = licenseId
     ? categoriesByLicense[licenseId]?.find(
-        (c) => c.id === categoryId
-      )
+      (c) => c.id === categoryId,
+    )
     : null;
 
   const STORAGE_KEY = `quiz-progress-${licenseId}-${categoryId}`;
@@ -49,7 +45,7 @@ const QuizPage: React.FC = () => {
     Record<string, boolean>
   >({});
   const [currentQId, setCurrentQId] = useState<string | null>(
-    null
+    null,
   );
 
   const {
@@ -58,8 +54,7 @@ const QuizPage: React.FC = () => {
     error,
   } = useQuery<Question[], Error>({
     queryKey: ["questions", licenseId, categoryId],
-    queryFn: () =>
-      fetchQuestions(licenseId!, categoryId!),
+    queryFn: () => fetchQuestions(licenseId!, categoryId!),
     enabled: Boolean(licenseId && categoryId),
     staleTime: Infinity,
   });
@@ -78,10 +73,8 @@ const QuizPage: React.FC = () => {
       }
     }
 
-    const savedAnswers: Record<string, string> =
-      saved.answers || {};
-    const savedCorrect: Record<string, boolean> =
-      saved.correctMap || {};
+    const savedAnswers: Record<string, string> = saved.answers || {};
+    const savedCorrect: Record<string, boolean> = saved.correctMap || {};
     const savedCurrent: string | null = saved.current || null;
 
     setAnswers(savedAnswers);
@@ -96,17 +89,15 @@ const QuizPage: React.FC = () => {
       // all done → straight to results
       navigate(
         `/${licenseId}/${categoryId}/results`,
-        { state: { questions, answers: savedAnswers } }
+        { state: { questions, answers: savedAnswers } },
       );
       return;
     }
 
     // if we have a saved current that's still open, keep it
-    const initial = openIds.includes(savedCurrent)
-      ? savedCurrent
-      : openIds[
-          Math.floor(Math.random() * openIds.length)
-        ];
+    const initial = openIds.includes(savedCurrent) ? savedCurrent : openIds[
+      Math.floor(Math.random() * openIds.length)
+    ];
     setCurrentQId(initial);
   }, [
     questions,
@@ -124,7 +115,7 @@ const QuizPage: React.FC = () => {
         answers,
         correctMap,
         current: currentQId,
-      })
+      }),
     );
   }, [answers, correctMap, currentQId, STORAGE_KEY]);
 
@@ -177,22 +168,22 @@ const QuizPage: React.FC = () => {
 
   // current question + progress
   const question = questions.find(
-    (q) => q.id === currentQId
+    (q) => q.id === currentQId,
   )!;
   const selected = answers[currentQId];
   const answered = selected !== undefined;
   const total = questions.length;
   const correctCount = Object.values(correctMap).filter(
-    (v) => v
+    (v) => v,
   ).length;
   const percentDone = Math.round(
-    (correctCount / total) * 100
+    (correctCount / total) * 100,
   );
 
   const handleSelect = (optId: string) => {
     if (answered) return;
     const opt = question.options.find(
-      (o) => o.id === optId
+      (o) => o.id === optId,
     );
     const isCorrect = opt?.isCorrect === true;
     setAnswers((prev) => ({
@@ -215,28 +206,27 @@ const QuizPage: React.FC = () => {
       // done
       navigate(
         `/${licenseId}/${categoryId}/results`,
-        { state: { questions, answers, correctMap } }
+        { state: { questions, answers, correctMap } },
       );
       return;
     }
 
     // avoid repeating the same Q if possible
     const candidates = openIds.filter(
-      (id) => id !== currentQId
+      (id) => id !== currentQId,
     );
-    const nextId =
-      candidates.length > 0
-        ? candidates[
-            Math.floor(Math.random() * candidates.length)
-          ]
-        : currentQId;
+    const nextId = candidates.length > 0
+      ? candidates[
+        Math.floor(Math.random() * candidates.length)
+      ]
+      : currentQId;
     setCurrentQId(nextId);
   };
 
   const handleReset = () => {
     if (
       globalThis.confirm(
-        "Fortschritt wirklich zurücksetzen?"
+        "Fortschritt wirklich zurücksetzen?",
       )
     ) {
       localStorage.removeItem(STORAGE_KEY);
@@ -290,6 +280,16 @@ const QuizPage: React.FC = () => {
             {question.question}
           </h2>
 
+          {question.image && (
+            <div className="mb-6 text-center">
+              <img
+                src={`${API_URL}/${question.image}`}
+                alt="Illustration zur Frage"
+                className="w-full h-auto max-w-1/10 mx-auto rounded"
+              />
+            </div>
+          )}
+
           <div className="space-y-4">
             {question.options.map((opt) => {
               let style = "border-gray-200 hover:border-gray-300";
@@ -297,17 +297,11 @@ const QuizPage: React.FC = () => {
 
               if (answered) {
                 if (opt.isCorrect) {
-                  style =
-                    "border-green-500 bg-green-50 text-green-800";
-                  icon = (
-                    <FaCheck className="w-5 h-5 text-green-500" />
-                  );
+                  style = "border-green-500 bg-green-50 text-green-800";
+                  icon = <FaCheck className="w-5 h-5 text-green-500" />;
                 } else if (opt.id === selected) {
-                  style =
-                    "border-red-500 bg-red-50 text-red-800";
-                  icon = (
-                    <FaX className="w-5 h-5 text-red-500" />
-                  );
+                  style = "border-red-500 bg-red-50 text-red-800";
+                  icon = <FaX className="w-5 h-5 text-red-500" />;
                 } else {
                   style = "border-gray-200 text-gray-500";
                 }
@@ -338,15 +332,13 @@ const QuizPage: React.FC = () => {
               mt-6 w-full py-2 rounded-lg text-white
               transition
               ${
-                answered
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-blue-600 opacity-50 cursor-not-allowed"
-              }
+              answered
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-blue-600 opacity-50 cursor-not-allowed"
+            }
             `}
           >
-            {percentDone === 100
-              ? "Ergebnis anzeigen"
-              : "Nächste Frage"}
+            {percentDone === 100 ? "Ergebnis anzeigen" : "Nächste Frage"}
           </button>
         </div>
       </main>

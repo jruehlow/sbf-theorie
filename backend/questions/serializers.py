@@ -5,7 +5,6 @@ from .models import Question
 
 class QuestionSerializer(serializers.ModelSerializer):
     options = serializers.SerializerMethodField()
-    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
@@ -13,7 +12,7 @@ class QuestionSerializer(serializers.ModelSerializer):
             "id",
             "question",
             "options",
-            "image_url",
+            "image",
             "category",
             "license",
         )
@@ -27,9 +26,3 @@ class QuestionSerializer(serializers.ModelSerializer):
         ]
         random.shuffle(opts)
         return opts
-
-    def get_image_url(self, obj: Question):
-        req = self.context.get("request")
-        if obj.image and req:
-            return req.build_absolute_uri(obj.image.url)
-        return None

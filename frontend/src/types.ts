@@ -7,5 +7,6 @@ export interface Option {
 export interface Question {
   id: string;
   question: string;
+  image?: string;
   options: Option[];
 }
