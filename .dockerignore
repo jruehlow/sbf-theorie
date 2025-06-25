@@ -1,0 +1,14 @@
+# python artifacts
+__pycache__/
+*.py[cod]
+.venv/
+
+# django db
+db.sqlite3
+
+# frontend build / deps
+frontend/node_modules/
+frontend/dist/
+
+# misc
+.git/

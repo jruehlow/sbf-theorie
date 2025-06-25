@@ -6,8 +6,6 @@ import { licenses } from "../data/licenses.ts";
 import { categoriesByLicense } from "../data/categories.ts";
 import { FaCheck, FaChevronLeft, FaX } from "react-icons/fa6";
 
-const API_URL = "http://localhost:8000";
-
 interface ReviewData {
   ef: number; // easiness factor
   interval: number; // days until next review
@@ -20,7 +18,7 @@ async function fetchQuestions(
   categoryId: string,
 ): Promise<Question[]> {
   const res = await fetch(
-    `${API_URL}/api/questions/?license=${licenseId}&category=${categoryId}`,
+    `/api/questions/?license=${licenseId}&category=${categoryId}`,
   );
   if (!res.ok) {
     throw new Error(`Fehler beim Laden: ${res.status} ${res.statusText}`);
@@ -288,7 +286,7 @@ const QuizPage: React.FC = () => {
           {question.image && (
             <div className="mb-6 text-center">
               <img
-                src={`${API_URL}/${question.image}`}
+                src={`/${question.image}`}
                 alt="Illustration zur Frage"
                 className="w-full h-auto max-w-1/10 mx-auto rounded"
               />
