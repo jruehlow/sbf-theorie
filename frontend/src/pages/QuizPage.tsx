@@ -8,6 +8,13 @@ import { FaCheck, FaChevronLeft, FaX } from "react-icons/fa6";
 
 const API_URL = "http://localhost:8000";
 
+interface ReviewData {
+  ef: number; // easiness factor
+  interval: number; // days until next review
+  due: number; // timestamp in ms
+  count: number; // consecutive correct answers
+}
+
 async function fetchQuestions(
   licenseId: string,
   categoryId: string,
@@ -16,9 +23,7 @@ async function fetchQuestions(
     `${API_URL}/api/questions/?license=${licenseId}&category=${categoryId}`,
   );
   if (!res.ok) {
-    throw new Error(
-      `Fehler beim Laden: ${res.status} ${res.statusText}`,
-    );
+    throw new Error(`Fehler beim Laden: ${res.status} ${res.statusText}`);
   }
   return res.json();
 }
@@ -32,27 +37,18 @@ const QuizPage: React.FC = () => {
 
   const license = licenses.find((l) => l.id === licenseId);
   const category = licenseId
-    ? categoriesByLicense[licenseId]?.find(
-      (c) => c.id === categoryId,
-    )
+    ? categoriesByLicense[licenseId]?.find((c) => c.id === categoryId)
     : null;
 
   const STORAGE_KEY = `quiz-progress-${licenseId}-${categoryId}`;
-  const [answers, setAnswers] = useState<
-    Record<string, string>
-  >({});
-  const [correctMap, setCorrectMap] = useState<
-    Record<string, boolean>
-  >({});
-  const [currentQId, setCurrentQId] = useState<string | null>(
-    null,
-  );
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [reviews, setReviews] = useState<Record<string, ReviewData>>({});
+  const [currentQId, setCurrentQId] = useState<string | null>(null);
 
-  const {
-    data: questions,
-    isLoading,
-    error,
-  } = useQuery<Question[], Error>({
+  const { data: questions, isLoading, error } = useQuery<
+    Question[],
+    Error
+  >({
     queryKey: ["questions", licenseId, categoryId],
     queryFn: () => fetchQuestions(licenseId!, categoryId!),
     enabled: Boolean(licenseId && categoryId),
@@ -62,9 +58,12 @@ const QuizPage: React.FC = () => {
   // on load—or when questions arrive—restore or init state
   useEffect(() => {
     if (!questions) return;
-
     const json = localStorage.getItem(STORAGE_KEY);
-    let saved: any = {};
+    let saved: {
+      answers?: Record<string, string>;
+      reviews?: Record<string, ReviewData>;
+      current?: string;
+    } = {};
     if (json) {
       try {
         saved = JSON.parse(json);
@@ -72,63 +71,52 @@ const QuizPage: React.FC = () => {
         saved = {};
       }
     }
-
-    const savedAnswers: Record<string, string> = saved.answers || {};
-    const savedCorrect: Record<string, boolean> = saved.correctMap || {};
-    const savedCurrent: string | null = saved.current || null;
+    const savedAnswers = saved.answers || {};
+    const savedReviews = saved.reviews || {};
+    const savedCurrent = saved.current || null;
 
     setAnswers(savedAnswers);
-    setCorrectMap(savedCorrect);
+    setReviews(savedReviews);
 
-    // compute open questions = unanswered or incorrect
+    const now = Date.now();
+    // open = not mastered (count<3) and due ≤ now
     const openIds = questions
-      .map((q) => q.id)
-      .filter((id) => savedCorrect[id] !== true);
+      .filter((q) => {
+        const r = savedReviews[q.id];
+        const count = r?.count ?? 0;
+        const due = r?.due ?? 0;
+        return count < 3 && due <= now;
+      })
+      .map((q) => q.id);
 
     if (openIds.length === 0) {
       // all done → straight to results
-      navigate(
-        `/${licenseId}/${categoryId}/results`,
-        { state: { questions, answers: savedAnswers } },
-      );
+      navigate(`/${licenseId}/${categoryId}/results`, {
+        state: { questions, answers: savedAnswers, reviews: savedReviews },
+      });
       return;
     }
 
-    // if we have a saved current that's still open, keep it
-    const initial = openIds.includes(savedCurrent) ? savedCurrent : openIds[
-      Math.floor(Math.random() * openIds.length)
-    ];
+    const initial = openIds.includes(savedCurrent!)
+      ? savedCurrent!
+      : openIds[Math.floor(Math.random() * openIds.length)];
     setCurrentQId(initial);
-  }, [
-    questions,
-    licenseId,
-    categoryId,
-    navigate,
-  ]);
+  }, [questions, licenseId, categoryId, navigate]);
 
-  // persist every time answers / correctMap / current change
+  // persist every time answers / reviews / current change
   useEffect(() => {
     if (!currentQId) return;
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({
-        answers,
-        correctMap,
-        current: currentQId,
-      }),
+      JSON.stringify({ answers, reviews, current: currentQId }),
     );
-  }, [answers, correctMap, currentQId, STORAGE_KEY]);
+  }, [answers, reviews, currentQId, STORAGE_KEY]);
 
   if (!license || !category) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-600">
-          Lizenz/Kategorie nicht gefunden.
-        </p>
-        <Link
-          to="/"
-          className="text-blue-600 underline"
-        >
+        <p className="text-red-600">Lizenz/Kategorie nicht gefunden.</p>
+        <Link to="/" className="text-blue-600 underline">
           Zurück zur Auswahl
         </Link>
       </div>
@@ -144,9 +132,7 @@ const QuizPage: React.FC = () => {
   if (error) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-600">
-          Fehler: {error.message}
-        </p>
+        <p className="text-red-600">Fehler: {error.message}</p>
       </div>
     );
   }
@@ -158,7 +144,6 @@ const QuizPage: React.FC = () => {
     );
   }
   if (!currentQId) {
-    // still initializing
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Frage wird geladen…</p>
@@ -166,72 +151,92 @@ const QuizPage: React.FC = () => {
     );
   }
 
-  // current question + progress
-  const question = questions.find(
-    (q) => q.id === currentQId,
-  )!;
+  // derive current question + progress
+  const question = questions.find((q) => q.id === currentQId)!;
   const selected = answers[currentQId];
   const answered = selected !== undefined;
+
   const total = questions.length;
-  const correctCount = Object.values(correctMap).filter(
-    (v) => v,
-  ).length;
-  const percentDone = Math.round(
-    (correctCount / total) * 100,
-  );
+  const masteredCount = Object.values(reviews).filter((r) => r.count >= 3)
+    .length;
+  const percentDone = Math.round((masteredCount / total) * 100);
 
   const handleSelect = (optId: string) => {
     if (answered) return;
-    const opt = question.options.find(
-      (o) => o.id === optId,
-    );
-    const isCorrect = opt?.isCorrect === true;
-    setAnswers((prev) => ({
-      ...prev,
-      [currentQId]: optId,
-    }));
-    setCorrectMap((prev) => ({
-      ...prev,
-      [currentQId]: isCorrect,
-    }));
+    const opt = question.options.find((o) => o.id === optId)!;
+    const isCorrect = opt.isCorrect === true;
+
+    setAnswers((a) => ({ ...a, [currentQId]: optId }));
+
+    setReviews((r) => {
+      const prev = r[currentQId] || {
+        ef: 2.5,
+        interval: 0,
+        due: Date.now(),
+        count: 0,
+      };
+      const now = Date.now();
+      let newCount = isCorrect ? prev.count + 1 : 0;
+      let newInterval: number;
+      let newEF = prev.ef;
+
+      if (isCorrect) {
+        if (newCount === 1) {
+          newInterval = 1;
+        } else if (newCount === 2) {
+          newInterval = 6;
+        } else {
+          newInterval = Math.round(prev.interval * prev.ef);
+        }
+        newEF = prev.ef + 0.1; // quality=5 → EF += 0.1
+      } else {
+        newInterval = 1;
+        // on wrong: keep EF unchanged, reset count
+      }
+
+      const newDue = now + newInterval * 24 * 60 * 60 * 1000;
+      return {
+        ...r,
+        [currentQId]: {
+          ef: newEF,
+          interval: newInterval,
+          due: newDue,
+          count: newCount,
+        },
+      };
+    });
   };
 
   const handleNext = () => {
-    // recompute open pool
+    const now = Date.now();
     const openIds = questions
-      .map((q) => q.id)
-      .filter((id) => correctMap[id] !== true);
+      .filter((q) => {
+        const r = reviews[q.id];
+        const count = r?.count ?? 0;
+        const due = r?.due ?? 0;
+        return count < 3 && due <= now;
+      })
+      .map((q) => q.id);
 
     if (openIds.length === 0) {
-      // done
-      navigate(
-        `/${licenseId}/${categoryId}/results`,
-        { state: { questions, answers, correctMap } },
-      );
+      navigate(`/${licenseId}/${categoryId}/results`, {
+        state: { questions, answers, reviews },
+      });
       return;
     }
 
-    // avoid repeating the same Q if possible
-    const candidates = openIds.filter(
-      (id) => id !== currentQId,
-    );
+    const candidates = openIds.filter((id) => id !== currentQId);
     const nextId = candidates.length > 0
-      ? candidates[
-        Math.floor(Math.random() * candidates.length)
-      ]
-      : currentQId;
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : currentQId!;
     setCurrentQId(nextId);
   };
 
   const handleReset = () => {
-    if (
-      globalThis.confirm(
-        "Fortschritt wirklich zurücksetzen?",
-      )
-    ) {
+    if (globalThis.confirm("Fortschritt wirklich zurücksetzen?")) {
       localStorage.removeItem(STORAGE_KEY);
       setAnswers({});
-      setCorrectMap({});
+      setReviews({});
       setCurrentQId(null);
     }
   };
@@ -265,7 +270,7 @@ const QuizPage: React.FC = () => {
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div className="text-gray-700 font-medium">
-            {correctCount} / {total} richtig
+            {masteredCount} / {total} beherrscht
           </div>
           <button
             onClick={handleReset}
@@ -330,8 +335,7 @@ const QuizPage: React.FC = () => {
             disabled={!answered}
             className={`
               mt-6 w-full py-2 rounded-lg text-white
-              transition
-              ${
+              transition ${
               answered
                 ? "bg-blue-600 hover:bg-blue-700"
                 : "bg-blue-600 opacity-50 cursor-not-allowed"

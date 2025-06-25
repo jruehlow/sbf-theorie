@@ -13,28 +13,36 @@ const CategorySelectionPage: React.FC = () => {
 
   const [progressMap, setProgressMap] = useState<ProgressMap>({});
 
-  // read localStorage → correctMap → % correct
+  // read localStorage → reviews → % mastered (count>=3)
   useEffect(() => {
     if (!licenseId) return;
+
     const m: ProgressMap = {};
     categories.forEach((cat) => {
       const key = `quiz-progress-${licenseId}-${cat.id}`;
       const json = localStorage.getItem(key);
       let pct = 0;
+
       if (json) {
         try {
           const saved = JSON.parse(json);
-          const correctMap: Record<string, boolean> = saved.correctMap || {};
-          const correctCount = Object.values(correctMap).filter(
-            (v) => v === true,
+          // saved.reviews is Record<questionId, { count, ef, interval, due }>
+          const reviews: Record<string, { count: number }> = saved.reviews ||
+            {};
+          const masteredCount = Object.values(reviews).filter(
+            (r) => r.count >= 3,
           ).length;
-          pct = Math.round((correctCount / cat.questionCount) * 100);
+          pct = Math.round(
+            (masteredCount / cat.questionCount) * 100,
+          );
         } catch {
           pct = 0;
         }
       }
+
       m[cat.id] = pct;
     });
+
     setProgressMap(m);
   }, [licenseId, categories]);
 
@@ -98,7 +106,7 @@ const CategorySelectionPage: React.FC = () => {
                 />
               </div>
               <p className="mt-1 text-sm text-gray-600">
-                {progress}% richtig
+                {progress}% beherrscht
               </p>
             </Link>
           );
