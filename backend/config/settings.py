@@ -15,7 +15,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
-    "backend.questions",
+    "questions",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -33,7 +33,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
 ]
 
-ROOT_URLCONF = "backend.urls"
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
@@ -51,7 +51,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "backend.wsgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
@@ -68,10 +68,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "backend/static_root"
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "questions/media"
+STATIC_ROOT = BASE_DIR / "static_root"
 
 # Erlaube CORS von Deinem React-Dev-Server
 CORS_ALLOWED_ORIGINS = [

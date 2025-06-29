@@ -1,11 +1,9 @@
 import json
 import os
-from uuid import uuid4
 
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.text import slugify
 
-from backend.questions.models import Question
+from questions.models import Question
 
 
 class Command(BaseCommand):
@@ -39,7 +37,6 @@ class Command(BaseCommand):
         except Exception as e:
             raise CommandError(f"Error parsing JSON: {e}")
 
-        used_ids = set()
         created = 0
 
         id = 1

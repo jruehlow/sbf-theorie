@@ -24,7 +24,7 @@ def scrape_category(license_key, category, page_url, questions):
 
     # for each question separator
     for sep in content.find_all("p", class_="line"):
-        # 1) find the very next <p> as question text
+        # find the very next <p> as question text
         question_p = None
         for sib in sep.next_siblings:
             if isinstance(sib, NavigableString):
@@ -46,13 +46,13 @@ def scrape_category(license_key, category, page_url, questions):
             qnum = len(questions) + 1
             question_text = raw
 
-        # 2) look for inline <img> in that <p>
+        # look for inline <img> in that <p>
         img_src = None
         inline = question_p.find("img")
         if inline:
             img_src = inline["src"]
 
-        # 3) scan forward siblings until the <ol> for an <ol> and a fallback <img>
+        # scan forward siblings until the <ol> for an <ol> and a fallback <img>
         ol = None
         for sib in question_p.next_siblings:
             if isinstance(sib, Tag) and sib.name == "ol" and \
@@ -106,7 +106,6 @@ def scrape_category(license_key, category, page_url, questions):
 
 
 def main():
-    # list of (license, category, URL) to scrape
     tasks = [
         ("sbf-binnen", "basisfragen",
          "https://www.elwis.de/DE/Sportschifffahrt/Sportbootfuehrerscheine/Fragenkatalog-Binnen/Basisfragen/Basisfragen-node.html"),
@@ -120,7 +119,6 @@ def main():
     for license_key, category, url in tasks:
         scrape_category(license_key, category, url, all_questions)
 
-    # write consolidated JSON
     with open("questions.json", "w", encoding="utf-8") as f:
         json.dump(all_questions, f, ensure_ascii=False, indent=2)
 
