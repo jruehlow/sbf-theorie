@@ -2,6 +2,7 @@ import json
 import os
 
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 from questions.models import Question
 
@@ -65,7 +66,8 @@ class Command(BaseCommand):
             # save
             q.save()
             created += 1
-            self.stdout.write(self.style.SUCCESS(f"Created {id}"))
+            if settings.DEBUG:
+                self.stdout.write(self.style.SUCCESS(f"Created {id}"))
             id += 1
 
         self.stdout.write(

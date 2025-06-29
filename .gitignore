@@ -4,3 +4,5 @@
 __pycache__/
 backend/static_root/*
 questions/media/*
+backend/questions.json
+questions/questions.json
