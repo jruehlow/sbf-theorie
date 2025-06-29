@@ -16,7 +16,7 @@ EXPOSE 8000
 ENTRYPOINT ["sh","-c", "\
     python manage.py migrate --noinput && \
     python manage.py makemigrations questions && \
-    python manage.py import_questions questions.json && \
+    python manage.py import_questions data/questions.json && \
     python manage.py migrate --noinput && \
     python manage.py collectstatic --noinput && \
     exec gunicorn config.wsgi:application \

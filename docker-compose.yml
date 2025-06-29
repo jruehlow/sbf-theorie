@@ -10,9 +10,9 @@ services:
       - "8000"
     volumes:
       - ./backend:/app
-      - ./questions/questions.json:/app/questions.json:ro
-      - sbf-theorie:/app/data
-      - sbf-theorie:/app/static_root
+      - sbf-data:/app/data
+      - sbf-static:/app/static_root
+      - ./questions/questions.json:/app/data/questions.json:ro
 
   frontend:
     build:
@@ -35,4 +35,5 @@ services:
       - ./questions/media:/data/media:ro
 
 volumes:
-  sbf-theorie:
+  sbf-data:
+  sbf-static:
