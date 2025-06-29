@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup, Tag, NavigableString
-from PIL import Image
+from PIL import Image, ImageFilter
 
 
 def scrape_category(license_key, category, page_url, questions):
@@ -83,14 +83,29 @@ def scrape_category(license_key, category, page_url, questions):
         image_path = None
         if img_src:
             full_url = urljoin(page_url, img_src)
-            r2 = requests.get(full_url)
-            r2.raise_for_status()
-            im = Image.open(BytesIO(r2.content)).convert("RGB")
+            resp = requests.get(full_url)
+            resp.raise_for_status()
+            im = Image.open(BytesIO(resp.content))
+            if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
+                im = im.convert("RGBA")
+            else:
+                im = im.convert("RGB")
+            scale = 3
+            w, h = im.size
+            im = im.resize((w * scale, h * scale), resample=Image.LANCZOS)
+            im = im.filter(
+                ImageFilter.UnsharpMask(radius=1, percent=150, threshold=3)
+            )
             img_name = f"question{qnum}.webp"
-            image_path = os.path.join(media_dir, img_name)
-            im.save(image_path, "WEBP")
-            # make path JSON‐friendly (posix style)
-            image_path = image_path.replace(os.sep, "/")
+            out_path = os.path.join(media_dir, img_name)
+            im.save(
+                out_path,
+                "WEBP",
+                quality=95,
+                method=6,
+                lossless=True
+            )
+            image_path = out_path.replace(os.sep, "/")
 
         # assemble question dict
         questions.append({
