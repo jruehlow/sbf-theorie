@@ -7,9 +7,6 @@ import { categoriesByLicense } from "../data/categories.ts";
 import { FaCheck, FaChevronLeft, FaX } from "react-icons/fa6";
 
 interface ReviewData {
-  ef: number; // easiness factor
-  interval: number; // days until next review
-  due: number; // timestamp in ms
   count: number; // consecutive correct answers
 }
 
@@ -41,6 +38,7 @@ const QuizPage: React.FC = () => {
   const STORAGE_KEY = `quiz-progress-${licenseId}-${categoryId}`;
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [reviews, setReviews] = useState<Record<string, ReviewData>>({});
+  const [finished, setFinished] = useState(false);
   const [currentQId, setCurrentQId] = useState<string | null>(null);
 
   const { data: questions, isLoading, error } = useQuery<
@@ -58,7 +56,6 @@ const QuizPage: React.FC = () => {
     if (!questions) return;
     const json = localStorage.getItem(STORAGE_KEY);
     let saved: {
-      answers?: Record<string, string>;
       reviews?: Record<string, ReviewData>;
       current?: string;
     } = {};
@@ -69,29 +66,21 @@ const QuizPage: React.FC = () => {
         saved = {};
       }
     }
-    const savedAnswers = saved.answers || {};
     const savedReviews = saved.reviews || {};
     const savedCurrent = saved.current || null;
 
-    setAnswers(savedAnswers);
     setReviews(savedReviews);
 
-    const now = Date.now();
-    // open = not mastered (count<3) and due ≤ now
     const openIds = questions
       .filter((q) => {
         const r = savedReviews[q.id];
         const count = r?.count ?? 0;
-        const due = r?.due ?? 0;
-        return count < 3 && due <= now;
+        return count < 3;
       })
       .map((q) => q.id);
 
     if (openIds.length === 0) {
-      // all done → straight to results
-      navigate(`/${licenseId}/${categoryId}/results`, {
-        state: { questions, answers: savedAnswers, reviews: savedReviews },
-      });
+      setFinished(true);
       return;
     }
 
@@ -101,14 +90,24 @@ const QuizPage: React.FC = () => {
     setCurrentQId(initial);
   }, [questions, licenseId, categoryId, navigate]);
 
+  // every time we switch to a new question, clear any previous answer
+  useEffect(() => {
+    if (!currentQId) return;
+    setAnswers((prev) => {
+      // remove the entry for the currentQId so `answered` → false
+      const { [currentQId]: _, ...rest } = prev;
+      return rest;
+    });
+  }, [currentQId]);
+
   // persist every time answers / reviews / current change
   useEffect(() => {
     if (!currentQId) return;
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ answers, reviews, current: currentQId }),
+      JSON.stringify({ reviews, current: currentQId }),
     );
-  }, [answers, reviews, currentQId, STORAGE_KEY]);
+  }, [reviews, currentQId, STORAGE_KEY]);
 
   if (!license || !category) {
     return (
@@ -117,6 +116,49 @@ const QuizPage: React.FC = () => {
         <Link to="/" className="text-blue-600 underline">
           Zurück zur Auswahl
         </Link>
+      </div>
+    );
+  }
+  if (finished) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <header className="bg-blue-600 text-white py-4 shadow">
+          <div className="container mx-auto px-4 flex items-center">
+            <Link
+              to={`/${licenseId}`}
+              className="flex items-center text-white hover:opacity-80"
+            >
+              <FaChevronLeft className="w-5 h-5 mr-2" />
+              Kategorien
+            </Link>
+            <h1 className="ml-4 text-lg font-semibold">
+              {license.name} – {category.name}
+            </h1>
+          </div>
+        </header>
+
+        <div className="items-center justify-center p-8">
+          <h2 className="text-2xl font-semibold mb-4">
+            🎉 Herzlichen Glückwunsch! 🎉
+          </h2>
+          <p className="mb-6">
+            Du hast alle Fragen dreimal korrekt beantwortet und damit
+            vollständig beherrscht.
+          </p>
+          <button
+            type="reset"
+            onClick={() => {
+              localStorage.removeItem(STORAGE_KEY);
+              setAnswers({});
+              setReviews({});
+              setCurrentQId(null);
+              setFinished(false);
+            }}
+            className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Quiz zurücksetzen
+          </button>
+        </div>
       </div>
     );
   }
@@ -168,37 +210,13 @@ const QuizPage: React.FC = () => {
 
     setReviews((r) => {
       const prev = r[currentQId] || {
-        ef: 2.5,
-        interval: 0,
-        due: Date.now(),
         count: 0,
       };
-      const now = Date.now();
-      let newCount = isCorrect ? prev.count + 1 : 0;
-      let newInterval: number;
-      let newEF = prev.ef;
+      const newCount = isCorrect ? prev.count + 1 : Math.max(0, prev.count - 1);
 
-      if (isCorrect) {
-        if (newCount === 1) {
-          newInterval = 1;
-        } else if (newCount === 2) {
-          newInterval = 6;
-        } else {
-          newInterval = Math.round(prev.interval * prev.ef);
-        }
-        newEF = prev.ef + 0.1; // quality=5 → EF += 0.1
-      } else {
-        newInterval = 1;
-        // on wrong: keep EF unchanged, reset count
-      }
-
-      const newDue = now + newInterval * 24 * 60 * 60 * 1000;
       return {
         ...r,
         [currentQId]: {
-          ef: newEF,
-          interval: newInterval,
-          due: newDue,
           count: newCount,
         },
       };
@@ -206,20 +224,16 @@ const QuizPage: React.FC = () => {
   };
 
   const handleNext = () => {
-    const now = Date.now();
     const openIds = questions
       .filter((q) => {
         const r = reviews[q.id];
         const count = r?.count ?? 0;
-        const due = r?.due ?? 0;
-        return count < 3 && due <= now;
+        return count < 3;
       })
       .map((q) => q.id);
 
     if (openIds.length === 0) {
-      navigate(`/${licenseId}/${categoryId}/results`, {
-        state: { questions, answers, reviews },
-      });
+      setFinished(true);
       return;
     }
 
@@ -227,6 +241,7 @@ const QuizPage: React.FC = () => {
     const nextId = candidates.length > 0
       ? candidates[Math.floor(Math.random() * candidates.length)]
       : currentQId!;
+    setAnswers({});
     setCurrentQId(nextId);
   };
 
@@ -241,7 +256,6 @@ const QuizPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
       <header className="bg-blue-600 text-white py-4 shadow">
         <div className="container mx-auto px-4 flex items-center">
           <Link
@@ -271,6 +285,7 @@ const QuizPage: React.FC = () => {
             {masteredCount} / {total} beherrscht
           </div>
           <button
+            type="reset"
             onClick={handleReset}
             className="text-sm text-red-600 hover:underline"
           >
@@ -312,6 +327,7 @@ const QuizPage: React.FC = () => {
 
               return (
                 <button
+                  type="button"
                   key={opt.id}
                   onClick={() => handleSelect(opt.id)}
                   disabled={answered}
@@ -329,6 +345,7 @@ const QuizPage: React.FC = () => {
           </div>
 
           <button
+            type="submit"
             onClick={handleNext}
             disabled={!answered}
             className={`
