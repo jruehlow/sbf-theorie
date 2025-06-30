@@ -1,0 +1,20 @@
+{
+  "short_name": "SBF",
+  "name": "SBF Theorie",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#155dfc",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icons/boat-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/boat-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
