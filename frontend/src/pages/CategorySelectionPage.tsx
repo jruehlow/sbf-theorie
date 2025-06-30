@@ -63,19 +63,19 @@ const CategorySelectionPage: React.FC = () => {
       <header className="bg-blue-600 text-white py-4">
         <div className="container mx-auto px-4 flex items-center">
           <Link
-            to="/"
-            className="mr-4 text-gray-200 hover:text-white"
+            to={`/licenses`}
+            className="flex items-center text-white hover:opacity-80"
           >
             <FaChevronLeft className="w-5 h-5 mr-2" />
             Zurück
           </Link>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl mx-auto font-semibold">
             {license.name} – Kategorien
           </h1>
         </div>
       </header>
 
-      <main className="container flex-grow mx-auto px-4 py-8 space-y-6">
+      <main className="container max-w-xl w-full mx-auto flex-grow px-4 py-8 space-y-6">
         {categories.map((cat) => {
           const progress = progressMap[cat.id] || 0;
           return (

@@ -121,7 +121,7 @@ const QuizPage: React.FC = () => {
   }
   if (finished) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen max-w-xl bg-gray-50 flex flex-col">
         <header className="bg-blue-600 text-white py-4 shadow">
           <div className="container mx-auto px-4 flex items-center">
             <Link
@@ -131,7 +131,7 @@ const QuizPage: React.FC = () => {
               <FaChevronLeft className="w-5 h-5 mr-2" />
               Kategorien
             </Link>
-            <h1 className="ml-4 text-lg font-semibold">
+            <h1 className="text-xl mx-auto font-semibold">
               {license.name} – {category.name}
             </h1>
           </div>
@@ -255,9 +255,9 @@ const QuizPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col">
       <header className="bg-blue-600 text-white py-4 shadow">
-        <div className="container mx-auto px-4 flex items-center">
+        <div className="container mx-auto px-4 flex items-center justify-between">
           <Link
             to={`/${licenseId}`}
             className="flex items-center text-white hover:opacity-80"
@@ -265,13 +265,22 @@ const QuizPage: React.FC = () => {
             <FaChevronLeft className="w-5 h-5 mr-2" />
             Kategorien
           </Link>
-          <h1 className="ml-4 text-lg font-semibold">
+
+          <h1 className="text-lg sm:text-xl font-semibold">
             {license.name} – {category.name}
           </h1>
+
+          <button
+            type="reset"
+            onClick={handleReset}
+            className="text-sm text-red-200 hover:text-red-100"
+          >
+            Reset
+          </button>
         </div>
       </header>
 
-      {/* slim top progress */}
+      {/* — PROGRESS BAR — */}
       <div className="w-full bg-gray-200 h-1">
         <div
           className="bg-blue-600 h-1 transition-all"
@@ -279,40 +288,30 @@ const QuizPage: React.FC = () => {
         />
       </div>
 
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-gray-700 font-medium">
-            {masteredCount} / {total} beherrscht
-          </div>
-          <button
-            type="reset"
-            onClick={handleReset}
-            className="text-sm text-red-600 hover:underline"
-          >
-            Reset
-          </button>
-        </div>
+      <main className="flex flex-col flex-grow max-w-xl w-full mx-auto px-2 py-4 sm:px-4 sm:py-8">
+        <div className="bg-white rounded-lg shadow-lg flex flex-col">
+          <div className="overflow-auto p-4 space-y-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-medium">
+              {question.question}
+            </h2>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h2 className="mb-6 text-xl font-medium">
-            {question.question}
-          </h2>
+            {question.image && (
+              <div className="text-center my-2">
+                <img
+                  src={`/${question.image}`}
+                  alt="Illustration zur Frage"
+                  className="
+                    w-full h-auto object-contain
+                    max-h-[60vh] sm:max-h-[80vh]
+                    rounded
+                  "
+                />
+              </div>
+            )}
 
-          {question.image && (
-            <div className="mb-6 text-center">
-              <img
-                src={`/${question.image}`}
-                alt="Illustration zur Frage"
-                className="w-full h-auto max-w-1/10 mx-auto rounded"
-              />
-            </div>
-          )}
-
-          <div className="space-y-4">
             {question.options.map((opt) => {
               let style = "border-gray-200 hover:border-gray-300";
               let icon = null;
-
               if (answered) {
                 if (opt.isCorrect) {
                   style = "border-green-500 bg-green-50 text-green-800";
@@ -324,17 +323,17 @@ const QuizPage: React.FC = () => {
                   style = "border-gray-200 text-gray-500";
                 }
               }
-
               return (
                 <button
                   type="button"
                   key={opt.id}
-                  onClick={() => handleSelect(opt.id)}
                   disabled={answered}
+                  onClick={() => handleSelect(opt.id)}
                   className={`
-                    w-full text-left p-4 border rounded-lg
-                    flex justify-between items-center transition
-                    ${style}
+                    w-full text-left px-3 py-2 sm:px-4 sm:py-3
+                    border rounded-lg flex justify-between
+                    items-center text-sm sm:text-base
+                    transition ${style}
                   `}
                 >
                   <span>{opt.text}</span>
@@ -344,21 +343,23 @@ const QuizPage: React.FC = () => {
             })}
           </div>
 
-          <button
-            type="submit"
-            onClick={handleNext}
-            disabled={!answered}
-            className={`
-              mt-6 w-full py-2 rounded-lg text-white
-              transition ${
-              answered
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-blue-600 opacity-50 cursor-not-allowed"
-            }
-            `}
-          >
-            {percentDone === 100 ? "Ergebnis anzeigen" : "Nächste Frage"}
-          </button>
+          <div className="p-4 sm:p-6">
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!answered}
+              className={`
+                 mt-4 w-full py-2 text-sm sm:text-base rounded-lg text-white 
+                  transition ${
+                answered
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-blue-600 opacity-50 cursor-not-allowed"
+              }
+              `}
+            >
+              {percentDone === 100 ? "Ergebnis anzeigen" : "Nächste Frage"}
+            </button>
+          </div>
         </div>
       </main>
     </div>
