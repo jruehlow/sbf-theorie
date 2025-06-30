@@ -263,11 +263,10 @@ const QuizPage: React.FC = () => {
             className="flex items-center text-white hover:opacity-80"
           >
             <FaChevronLeft className="w-5 h-5 mr-2" />
-            Kategorien
+            Zurück
           </Link>
-
-          <h1 className="text-lg sm:text-xl font-semibold">
-            {license.name} – {category.name}
+          <h1 className="text-xl mx-auto font-semibold">
+            {license.name} – Kategorien
           </h1>
 
           <button
