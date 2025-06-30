@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { categoriesByLicense } from "../data/categories.ts";
 import { licenses } from "../data/licenses.ts";
 import { FaChevronLeft } from "react-icons/fa6";
+import Footer from "../components/Footer.tsx";
 
 type ProgressMap = Record<string, number>;
 
@@ -112,6 +113,7 @@ const CategorySelectionPage: React.FC = () => {
           );
         })}
       </main>
+      <Footer />
     </div>
   );
 };

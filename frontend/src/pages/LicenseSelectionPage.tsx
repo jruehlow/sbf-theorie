@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { licenses } from "../data/licenses.ts";
+import Footer from "../components/Footer.tsx";
 
 const LicenseSelectionPage: React.FC = () => {
   return (
@@ -33,6 +34,7 @@ const LicenseSelectionPage: React.FC = () => {
           </Link>
         ))}
       </main>
+      <Footer />
     </div>
   );
 };
