@@ -19,6 +19,11 @@ export const categoriesByLicense: Record<string, Category[]> = {
     },
   ],
   "sbf-see": [
-    // TODO: fill up
+    { id: "basisfragen", name: "Basisfragen", questionCount: 72 },
+    {
+      id: "fragen-see",
+      name: "Spezifische Fragen See",
+      questionCount: 213,
+    },
   ],
 };

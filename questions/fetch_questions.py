@@ -128,10 +128,15 @@ def main():
          "https://www.elwis.de/DE/Sportschifffahrt/Sportbootfuehrerscheine/Fragenkatalog-Binnen/Spezifische-Fragen-Binnen/Spezifische-Fragen-Binnen-node.html"),
         ("sbf-binnen", "fragen-segeln",
          "https://www.elwis.de/DE/Sportschifffahrt/Sportbootfuehrerscheine/Fragenkatalog-Binnen/Spezifische-Fragen-Segeln/Spezifische-Fragen-Segeln-node.html"),
+        ("sbf-see", "basisfragen",
+         "https://www.elwis.de/DE/Sportschifffahrt/Sportbootfuehrerscheine/Fragenkatalog-See/Basisfragen/Basisfragen-node.html"),
+        ("sbf-see", "fragen-see",
+         "https://www.elwis.de/DE/Sportschifffahrt/Sportbootfuehrerscheine/Fragenkatalog-See/Spezifische-Fragen-See/Spezifische-Fragen-See-node.html"),
     ]
 
     all_questions = []
     for license_key, category, url in tasks:
+        print(f"Load: {license_key} | {category}")
         scrape_category(license_key, category, url, all_questions)
 
     with open("questions.json", "w", encoding="utf-8") as f:

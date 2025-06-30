@@ -6,7 +6,7 @@ Download questions
 ```bash
 cd questions
 pip install -r requirements.txt
-python3 parse_binnen.py
+python3 fetch_questions.py
 ```
 
 Run Server
