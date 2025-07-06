@@ -254,7 +254,6 @@ const QuizPage: React.FC = () => {
         resetText="Reset"
       />
 
-      {/* — PROGRESS BAR — */}
       <div className="w-full bg-gray-200 h-1">
         <div
           className="bg-blue-600 h-1 transition-all"
@@ -270,15 +269,11 @@ const QuizPage: React.FC = () => {
             </h2>
 
             {question.image && (
-              <div className="text-center my-2">
+              <div className="text-center my-4">
                 <img
                   src={`/${question.image}`}
                   alt="Illustration zur Frage"
-                  className="
-                    w-full h-auto object-contain
-                    max-h-[60vh] sm:max-h-[80vh]
-                    rounded
-                  "
+                  className=" block mx-auto w-auto h-auto max-w-[80vw] sm:max-w-md max-h-32 sm:max-h-48 object-contain rounded"
                 />
               </div>
             )}
