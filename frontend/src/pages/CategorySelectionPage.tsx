@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { categoriesByLicense } from "../data/categories.ts";
 import { licenses } from "../data/licenses.ts";
-import { FaChevronLeft } from "react-icons/fa6";
 import Footer from "../components/Footer.tsx";
 import Header from "../components/Header.tsx";
 
