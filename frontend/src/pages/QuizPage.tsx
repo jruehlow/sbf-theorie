@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Question } from "../types.ts";
 import { licenses } from "../data/licenses.ts";
 import { categoriesByLicense } from "../data/categories.ts";
-import { FaCheck, FaChevronLeft, FaX } from "react-icons/fa6";
+import { FaCheck, FaX } from "react-icons/fa6";
 import Header from "../components/Header.tsx";
 
 interface ReviewData {
@@ -187,10 +187,13 @@ const QuizPage: React.FC = () => {
   const selected = answers[currentQId];
   const answered = selected !== undefined;
 
-  const total = questions.length;
-  const masteredCount = Object.values(reviews).filter((r) => r.count >= 3)
-    .length;
-  const percentDone = Math.round((masteredCount / total) * 100);
+  // calculate progress
+  const total = questions.length * 3;
+  const done = questions.reduce((acc, q) => {
+    const c = reviews[q.id]?.count ?? 0;
+    return acc + Math.min(c, 3);
+  }, 0);
+  const percentDone = Math.round((done / total) * 100);
 
   const handleSelect = (optId: string) => {
     if (answered) return;
@@ -242,6 +245,7 @@ const QuizPage: React.FC = () => {
       setAnswers({});
       setReviews({});
       setCurrentQId(null);
+      navigate(`/${licenseId}`);
     }
   };
 

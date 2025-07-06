@@ -15,7 +15,6 @@ const CategorySelectionPage: React.FC = () => {
 
   const [progressMap, setProgressMap] = useState<ProgressMap>({});
 
-  // read localStorage → reviews → % mastered (count>=3)
   useEffect(() => {
     if (!licenseId) return;
 
@@ -28,15 +27,17 @@ const CategorySelectionPage: React.FC = () => {
       if (json) {
         try {
           const saved = JSON.parse(json);
-          // saved.reviews is Record<questionId, { count, ef, interval, due }>
+          // saved.reviews: Record<questionId, { count }>
           const reviews: Record<string, { count: number }> = saved.reviews ||
             {};
-          const masteredCount = Object.values(reviews).filter(
-            (r) => r.count >= 3,
-          ).length;
-          pct = Math.round(
-            (masteredCount / cat.questionCount) * 100,
+
+          const total = cat.questionCount * 3;
+          const done = Object.values(reviews).reduce(
+            (sum, { count }) => sum + Math.min(count, 3),
+            0,
           );
+
+          pct = total > 0 ? Math.round((done / total) * 100) : 0;
         } catch {
           pct = 0;
         }
