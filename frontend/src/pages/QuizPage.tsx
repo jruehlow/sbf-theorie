@@ -218,23 +218,40 @@ const QuizPage: React.FC = () => {
   };
 
   const handleNext = () => {
-    const openIds = questions
-      .filter((q) => {
-        const r = reviews[q.id];
-        const count = r?.count ?? 0;
-        return count < 3;
-      })
-      .map((q) => q.id);
+    // Find all questions with count < 3
+    const openQuestions = questions.filter((q) => {
+      const count = reviews[q.id]?.count ?? 0;
+      return count < 3;
+    });
 
-    if (openIds.length === 0) {
+    // If none left, mark finished
+    if (openQuestions.length === 0) {
       setFinished(true);
       return;
     }
 
-    const candidates = openIds.filter((id) => id !== currentQId);
-    const nextId = candidates.length > 0
-      ? candidates[Math.floor(Math.random() * candidates.length)]
-      : currentQId!;
+    // Build a pool of candidates (avoid current question if possible)
+    const candidateIds = openQuestions
+      .map((q) => q.id)
+      .filter((id) => id !== currentQId);
+    const pool = candidateIds.length > 0 ? candidateIds : [currentQId!];
+
+    // Compute weights = 3 - count
+    const weights = pool.map((id) => 3 - (reviews[id]?.count ?? 0));
+
+    // Pick one at random, proportional to its weight
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+    let r = Math.random() * totalWeight;
+    let nextId = pool[0];
+    for (let i = 0; i < pool.length; i++) {
+      r -= weights[i];
+      if (r <= 0) {
+        nextId = pool[i];
+        break;
+      }
+    }
+
+    // Reset the answers and move on
     setAnswers({});
     setCurrentQId(nextId);
   };
