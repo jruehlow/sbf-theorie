@@ -4,6 +4,7 @@ import { categoriesByLicense } from "../data/categories.ts";
 import { licenses } from "../data/licenses.ts";
 import { FaChevronLeft } from "react-icons/fa6";
 import Footer from "../components/Footer.tsx";
+import Header from "../components/Header.tsx";
 
 type ProgressMap = Record<string, number>;
 
@@ -60,20 +61,7 @@ const CategorySelectionPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-blue-600 text-white py-4">
-        <div className="container mx-auto px-4 flex items-center">
-          <Link
-            to={`/licenses`}
-            className="flex items-center text-white hover:opacity-80"
-          >
-            <FaChevronLeft className="w-5 h-5 mr-2" />
-            Zurück
-          </Link>
-          <h1 className="text-xl mx-auto font-semibold">
-            {license.name} – Kategorien
-          </h1>
-        </div>
-      </header>
+      <Header title={license.name} backTo="/licenses" />
 
       <main className="container max-w-xl w-full mx-auto flex-grow px-4 py-8 space-y-6">
         {categories.map((cat) => {

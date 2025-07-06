@@ -5,6 +5,7 @@ import type { Question } from "../types.ts";
 import { licenses } from "../data/licenses.ts";
 import { categoriesByLicense } from "../data/categories.ts";
 import { FaCheck, FaChevronLeft, FaX } from "react-icons/fa6";
+import Header from "../components/Header.tsx";
 
 interface ReviewData {
   count: number; // consecutive correct answers
@@ -122,20 +123,10 @@ const QuizPage: React.FC = () => {
   if (finished) {
     return (
       <div className="min-h-screen max-w-xl bg-gray-50 flex flex-col">
-        <header className="bg-blue-600 text-white py-4 shadow">
-          <div className="container mx-auto px-4 flex items-center">
-            <Link
-              to={`/${licenseId}`}
-              className="flex items-center text-white hover:opacity-80"
-            >
-              <FaChevronLeft className="w-5 h-5 mr-2" />
-              Kategorien
-            </Link>
-            <h1 className="text-xl mx-auto font-semibold">
-              {license.name} – {category.name}
-            </h1>
-          </div>
-        </header>
+        <Header
+          title={category.name}
+          backTo={"/" + licenseId}
+        />
 
         <div className="items-center justify-center p-8">
           <h2 className="text-2xl font-semibold mb-4">
@@ -256,28 +247,12 @@ const QuizPage: React.FC = () => {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-      <header className="bg-blue-600 text-white py-4 shadow">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <Link
-            to={`/${licenseId}`}
-            className="flex items-center text-white hover:opacity-80"
-          >
-            <FaChevronLeft className="w-5 h-5 mr-2" />
-            Zurück
-          </Link>
-          <h1 className="text-xl mx-auto font-semibold">
-            {license.name} – Kategorien
-          </h1>
-
-          <button
-            type="reset"
-            onClick={handleReset}
-            className="text-sm text-red-200 hover:text-red-100"
-          >
-            Reset
-          </button>
-        </div>
-      </header>
+      <Header
+        title={category.name}
+        backTo={"/" + licenseId}
+        onReset={handleReset}
+        resetText="Reset"
+      />
 
       {/* — PROGRESS BAR — */}
       <div className="w-full bg-gray-200 h-1">
@@ -329,7 +304,7 @@ const QuizPage: React.FC = () => {
                   disabled={answered}
                   onClick={() => handleSelect(opt.id)}
                   className={`
-                    w-full text-left px-3 py-2 sm:px-4 sm:py-3
+                    w-full text-left px-3 py-4 sm:px-4 sm:py-3
                     border rounded-lg flex justify-between
                     items-center text-sm sm:text-base
                     transition ${style}
@@ -348,7 +323,7 @@ const QuizPage: React.FC = () => {
               onClick={handleNext}
               disabled={!answered}
               className={`
-                 mt-4 w-full py-2 text-sm sm:text-base rounded-lg text-white 
+                 mt-4 w-full py-4 text-sm sm:text-base rounded-lg text-white 
                   transition ${
                 answered
                   ? "bg-blue-600 hover:bg-blue-700"
