@@ -9,4 +9,5 @@ export interface Question {
   question: string;
   image?: string;
   options: Option[];
+  categoryId?: string;
 }

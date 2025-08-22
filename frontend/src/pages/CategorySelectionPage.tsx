@@ -64,6 +64,7 @@ const CategorySelectionPage: React.FC = () => {
       <Header title={license.name} backTo="/licenses" />
 
       <main className="container max-w-xl w-full mx-auto flex-grow px-4 py-8 space-y-6">
+        {/* Normal categories */}
         {categories.map((cat) => {
           const progress = progressMap[cat.id] || 0;
           return (
@@ -100,6 +101,18 @@ const CategorySelectionPage: React.FC = () => {
             </Link>
           );
         })}
+        {/* Prüfungsmodus link */}
+        {licenseId === "sbf-binnen" && (
+          <Link
+            to={`/${licenseId}/exam`}
+            className="block bg-yellow-50 p-6 rounded-lg shadow hover:shadow-lg transition"
+          >
+            <h2 className="font-semibold text-lg">Prüfungsmodus</h2>
+            <p className="text-sm text-gray-600">
+              Simuliere eine echte Prüfung mit Zeitlimit
+            </p>
+          </Link>
+        )}
       </main>
       <Footer />
     </div>
