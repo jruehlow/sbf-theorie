@@ -183,7 +183,18 @@ const QuizPage: React.FC = () => {
   }
 
   // derive current question + progress
-  const question = questions.find((q) => q.id === currentQId)!;
+  const rawQuestion = questions.find((q) => q.id === currentQId)!;
+
+  // shuffle helper
+  const shuffle = <T,>(arr: T[]): T[] =>
+    [...arr].sort(() => Math.random() - 0.5);
+
+  // shuffle options fresh each time we load a question
+  const question = {
+    ...rawQuestion,
+    options: shuffle(rawQuestion.options),
+  };
+
   const selected = answers[currentQId];
   const answered = selected !== undefined;
 
