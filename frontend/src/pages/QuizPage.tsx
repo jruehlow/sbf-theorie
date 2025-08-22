@@ -236,8 +236,11 @@ const QuizPage: React.FC = () => {
       .filter((id) => id !== currentQId);
     const pool = candidateIds.length > 0 ? candidateIds : [currentQId!];
 
-    // Compute weights = 3 - count
-    const weights = pool.map((id) => 3 - (reviews[id]?.count ?? 0));
+    // Compute weights - quadratic weighting so worse answered questions occur more frequently
+    const weights = pool.map((id) => {
+      const count = reviews[id]?.count ?? 0;
+      return (3 - count) * (3 - count);
+    });
 
     // Pick one at random, proportional to its weight
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
