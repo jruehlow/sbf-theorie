@@ -13,3 +13,13 @@ Run Server
 ```bash
 docker compose up --build -d
 ```
+
+## Development
+
+Run the Docker development stack:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+

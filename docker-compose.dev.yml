@@ -1,0 +1,52 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sbf-theorie_backend
+    env_file:
+      - backend/.env
+    entrypoint: []
+    command: sh -c "python manage.py migrate --noinput && python manage.py import_questions data/questions.json && python manage.py runserver 0.0.0.0:8000"
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - sbf-data:/app/data
+      - sbf-static:/app/static_root
+      - ./questions/questions.json:/app/data/questions.json:ro
+
+  frontend:
+    image: node:24-alpine
+    container_name: sbf-theorie_frontend_dev
+    working_dir: /app
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    volumes:
+      - ./frontend:/app:delegated    # your source → container
+      - /app/node_modules           # keep node_modules inside container
+    ports:
+      - "5173:5173"
+    expose:
+      - "5173"
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: sbf-theorie_proxy_dev
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./questions/media:/data/media:ro
+
+volumes:
+  sbf-data:
+  sbf-static:
