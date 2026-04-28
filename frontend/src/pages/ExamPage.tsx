@@ -5,7 +5,11 @@ import { examConfigs } from "../data/examConfigs.ts";
 import { licenses } from "../data/licenses.ts";
 import type { Question } from "../types.ts";
 import Header from "../components/Header.tsx";
-import { FaCheck, FaX } from "react-icons/fa6";
+import AnswerOption from "../components/AnswerOption.tsx";
+import Button from "../components/Button.tsx";
+import Card from "../components/Card.tsx";
+import Page from "../components/Page.tsx";
+import ProgressBar from "../components/ProgressBar.tsx";
 
 async function fetchQuestions(
 	licenseId: string,
@@ -152,103 +156,96 @@ const ExamPage: React.FC = () => {
 
 	if (finished && result) {
 		return (
-			<div className="min-h-screen bg-gray-50 flex flex-col">
+			<div className="min-h-screen bg-slate-50 flex flex-col">
 				<Header title="Prüfung beendet" backTo={`/${licenseId}/exam`} />
-				<main className="max-w-xl w-full mx-auto p-6">
-					<h2 className="text-2xl font-semibold mb-4">
-						{result.passed ? "🎉 Bestanden!" : "❌ Nicht bestanden"}
-					</h2>
-					<p className="mb-4">
-						Du hast {result.totalCorrect} von {questions.length}
-						{" "}
-						Fragen korrekt beantwortet.
-					</p>
-					<button
-						type="button"
-						onClick={() => navigate(`/${licenseId}/exam`)}
-						className="px-6 py-2 bg-blue-600 text-white rounded"
-					>
-						Zurück zur Auswahl
-					</button>
-				</main>
+				<Page>
+					<Card className="p-6">
+						<p
+							className={`text-sm font-semibold uppercase tracking-wide ${
+								result.passed ? "text-emerald-700" : "text-red-700"
+							}`}
+						>
+							{result.passed ? "Bestanden" : "Nicht bestanden"}
+						</p>
+						<h2 className="mt-2 text-2xl font-semibold">
+							{result.totalCorrect} von {questions.length} Fragen korrekt
+						</h2>
+						<p className="mt-3 text-sm leading-6 text-slate-600">
+							{result.passed
+								? "Das Ergebnis erfüllt die Bestehensregel dieser Prüfung."
+								: "Trainiere die schwachen Kategorien weiter und starte danach einen neuen Prüfungsversuch."}
+						</p>
+						<Button
+							type="button"
+							onClick={() => navigate(`/${licenseId}/exam`)}
+							className="mt-6"
+						>
+							Zurück zur Auswahl
+						</Button>
+					</Card>
+				</Page>
 			</div>
 		);
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-50 flex flex-col">
+		<div className="min-h-screen bg-slate-50 flex flex-col">
 			<Header title={examConfig.title} backTo={`/${licenseId}/exam`} />
-			<div className="bg-gray-200 h-1">
-				<div
-					className="bg-blue-600 h-1"
-					style={{
-						width: `${
-							((currentIndex + 1) / questions.length) * 100
-						}%`,
-					}}
-				/>
-			</div>
-			<main className="max-w-xl w-full mx-auto flex-grow p-6">
-				<div className="flex justify-between mb-4">
+			<ProgressBar
+				value={currentIndex + 1}
+				max={questions.length}
+				className="h-1 rounded-none"
+			/>
+			<Page contentClassName="pb-28">
+				<div className="mb-4 flex justify-between text-sm text-slate-500">
 					<span>Frage {currentIndex + 1} / {questions.length}</span>
-					<span>
+					<span className="font-semibold text-blue-700">
 						{minutes}:{seconds.toString().padStart(2, "0")}
 					</span>
 				</div>
-				<h2 className="text-lg font-medium mb-4">
-					{currentQ.question}
-				</h2>
-				{currentQ.image && (
-					<div className="mb-4">
-						<img
-							src={`/${currentQ.image}`}
-							alt=""
-							className="max-h-48 mx-auto"
-						/>
-					</div>
-				)}
-				<div className="space-y-2">
-					{currentQ.options.map((opt) => {
-						let style = "border-gray-200";
-						let icon = null;
-						if (answered) {
-							if (opt.isCorrect) {
-								style = "border-green-500 bg-green-50";
-								icon = <FaCheck className="text-green-500" />;
-							} else if (opt.id === selected) {
-								style = "border-red-500 bg-red-50";
-								icon = <FaX className="text-red-500" />;
-							}
-						}
-						return (
-							<button
-								type="button"
+				<Card className="p-4 sm:p-6">
+					<h2 className="text-lg font-semibold leading-7 sm:text-xl">
+						{currentQ.question}
+					</h2>
+					{currentQ.image && (
+						<div className="my-4">
+							<img
+								src={`/${currentQ.image}`}
+								alt="Illustration zur Frage"
+								className="mx-auto max-h-48 rounded object-contain"
+							/>
+						</div>
+					)}
+					<div className="mt-4 space-y-2">
+						{currentQ.options.map((opt) => (
+							<AnswerOption
 								key={opt.id}
+								text={opt.text}
+								reveal={answered}
+								selected={opt.id === selected}
+								correct={opt.isCorrect}
 								disabled={answered}
-								onClick={() => handleSelect(opt.id)}
-								className={`w-full text-left px-3 py-2 border rounded flex justify-between ${style}`}
-							>
-								<span>{opt.text}</span>
-								{icon}
-							</button>
-						);
-					})}
+								onSelect={() => handleSelect(opt.id)}
+							/>
+						))}
+					</div>
+				</Card>
+			</Page>
+
+			<div className="fixed inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+				<div className="mx-auto max-w-2xl">
+					<Button
+						type="button"
+						onClick={handleNext}
+						disabled={!answered}
+						fullWidth
+					>
+						{currentIndex === questions.length - 1
+							? "Prüfung beenden"
+							: "Nächste Frage"}
+					</Button>
 				</div>
-				<button
-					type="button"
-					onClick={handleNext}
-					disabled={!answered}
-					className={`mt-6 w-full py-3 rounded text-white ${
-						answered
-							? "bg-blue-600 hover:bg-blue-700"
-							: "bg-blue-400 cursor-not-allowed"
-					}`}
-				>
-					{currentIndex === questions.length - 1
-						? "Prüfung beenden"
-						: "Nächste Frage"}
-				</button>
-			</main>
+			</div>
 		</div>
 	);
 };

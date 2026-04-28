@@ -8,8 +8,8 @@ export const categoriesByLicense: Record<string, Category[]> = {
   "sbf-binnen": [
     { id: "basisfragen", name: "Basisfragen", questionCount: 72 },
     {
-      id: "fragen-binnen ",
-      name: "Spezifische Fragen Binnen ",
+      id: "fragen-binnen",
+      name: "Spezifische Fragen Binnen",
       questionCount: 181,
     },
     {

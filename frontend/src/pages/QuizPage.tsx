@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import type { Question } from "../types.ts";
 import { licenses } from "../data/licenses.ts";
 import { categoriesByLicense } from "../data/categories.ts";
-import { FaCheck, FaX } from "react-icons/fa6";
 import Header from "../components/Header.tsx";
+import AnswerOption from "../components/AnswerOption.tsx";
+import Button from "../components/Button.tsx";
+import Card from "../components/Card.tsx";
+import Page from "../components/Page.tsx";
+import ProgressBar from "../components/ProgressBar.tsx";
 
 interface ReviewData {
   count: number; // consecutive correct answers
@@ -89,15 +93,15 @@ const QuizPage: React.FC = () => {
       ? savedCurrent!
       : openIds[Math.floor(Math.random() * openIds.length)];
     setCurrentQId(initial);
-  }, [questions, licenseId, categoryId, navigate]);
+  }, [questions, STORAGE_KEY]);
 
   // every time we switch to a new question, clear any previous answer
   useEffect(() => {
     if (!currentQId) return;
     setAnswers((prev) => {
-      // remove the entry for the currentQId so `answered` → false
-      const { [currentQId]: _, ...rest } = prev;
-      return rest;
+      const next = { ...prev };
+      delete next[currentQId];
+      return next;
     });
   }, [currentQId]);
 
@@ -109,6 +113,17 @@ const QuizPage: React.FC = () => {
       JSON.stringify({ reviews, current: currentQId }),
     );
   }, [reviews, currentQId, STORAGE_KEY]);
+
+  const question = useMemo(() => {
+    if (!questions || !currentQId) return null;
+    const rawQuestion = questions.find((q) => q.id === currentQId);
+    if (!rawQuestion) return null;
+
+    return {
+      ...rawQuestion,
+      options: [...rawQuestion.options].sort(() => Math.random() - 0.5),
+    };
+  }, [questions, currentQId]);
 
   if (!license || !category) {
     return (
@@ -122,34 +137,40 @@ const QuizPage: React.FC = () => {
   }
   if (finished) {
     return (
-      <div className="min-h-screen max-w-xl bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 flex flex-col">
         <Header
           title={category.name}
           backTo={"/" + licenseId}
         />
 
-        <div className="items-center justify-center p-8">
-          <h2 className="text-2xl font-semibold mb-4">
-            🎉 Herzlichen Glückwunsch! 🎉
-          </h2>
-          <p className="mb-6">
-            Du hast alle Fragen dreimal korrekt beantwortet und damit
-            vollständig beherrscht.
-          </p>
-          <button
-            type="reset"
-            onClick={() => {
-              localStorage.removeItem(STORAGE_KEY);
-              setAnswers({});
-              setReviews({});
-              setCurrentQId(null);
-              setFinished(false);
-            }}
-            className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Quiz zurücksetzen
-          </button>
-        </div>
+        <Page>
+          <Card className="p-6">
+            <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">
+              Abgeschlossen
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              Alle Fragen beherrscht
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Du hast alle Fragen dreimal korrekt beantwortet. Du kannst die
+              Kategorie zurücksetzen und von vorn trainieren.
+            </p>
+            <Button
+              type="button"
+              variant="danger"
+              className="mt-6"
+              onClick={() => {
+                localStorage.removeItem(STORAGE_KEY);
+                setAnswers({});
+                setReviews({});
+                setCurrentQId(null);
+                setFinished(false);
+              }}
+            >
+              Quiz zurücksetzen
+            </Button>
+          </Card>
+        </Page>
       </div>
     );
   }
@@ -174,26 +195,13 @@ const QuizPage: React.FC = () => {
       </div>
     );
   }
-  if (!currentQId) {
+  if (!currentQId || !question) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Frage wird geladen…</p>
       </div>
     );
   }
-
-  // derive current question + progress
-  const rawQuestion = questions.find((q) => q.id === currentQId)!;
-
-  // shuffle helper
-  const shuffle = <T,>(arr: T[]): T[] =>
-    [...arr].sort(() => Math.random() - 0.5);
-
-  // shuffle options fresh each time we load a question
-  const question = {
-    ...rawQuestion,
-    options: shuffle(rawQuestion.options),
-  };
 
   const selected = answers[currentQId];
   const answered = selected !== undefined;
@@ -281,25 +289,25 @@ const QuizPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header
         title={category.name}
         backTo={"/" + licenseId}
         onReset={handleReset}
-        resetText="Reset"
+        resetText="Zurücksetzen"
       />
 
-      <div className="w-full bg-gray-200 h-1">
-        <div
-          className="bg-blue-600 h-1 transition-all"
-          style={{ width: `${percentDone}%` }}
-        />
-      </div>
+      <ProgressBar value={percentDone} className="h-1 rounded-none" />
 
-      <main className="flex flex-col flex-grow max-w-xl w-full mx-auto px-2 py-4 sm:px-4 sm:py-8">
-        <div className="bg-white rounded-lg shadow-lg flex flex-col">
-          <div className="overflow-auto p-4 space-y-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-medium">
+      <Page contentClassName="pb-28">
+        <div className="mb-4 flex items-center justify-between text-sm text-slate-500">
+          <span>{done} / {total} Lernschritte</span>
+          <span className="font-semibold text-blue-700">{percentDone}%</span>
+        </div>
+
+        <Card className="overflow-hidden">
+          <div className="p-4 space-y-4 sm:p-6">
+            <h2 className="text-lg font-semibold leading-7 sm:text-xl">
               {question.question}
             </h2>
 
@@ -313,59 +321,43 @@ const QuizPage: React.FC = () => {
               </div>
             )}
 
-            {question.options.map((opt) => {
-              let style = "border-gray-200 hover:border-gray-300";
-              let icon = null;
-              if (answered) {
-                if (opt.isCorrect) {
-                  style = "border-green-500 bg-green-50 text-green-800";
-                  icon = <FaCheck className="w-5 h-5 text-green-500" />;
-                } else if (opt.id === selected) {
-                  style = "border-red-500 bg-red-50 text-red-800";
-                  icon = <FaX className="w-5 h-5 text-red-500" />;
-                } else {
-                  style = "border-gray-200 text-gray-500";
-                }
-              }
-              return (
-                <button
-                  type="button"
+            <div className="space-y-2">
+              {question.options.map((opt) => (
+                <AnswerOption
                   key={opt.id}
+                  text={opt.text}
+                  reveal={answered}
+                  selected={opt.id === selected}
+                  correct={opt.isCorrect}
                   disabled={answered}
-                  onClick={() => handleSelect(opt.id)}
-                  className={`
-                    w-full text-left px-3 py-4 sm:px-4 sm:py-3
-                    border rounded-lg flex justify-between
-                    items-center text-sm sm:text-base
-                    transition ${style}
-                  `}
-                >
-                  <span>{opt.text}</span>
-                  {icon}
-                </button>
-              );
-            })}
-          </div>
+                  onSelect={() => handleSelect(opt.id)}
+                />
+              ))}
+            </div>
 
-          <div className="p-4 sm:p-6">
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!answered}
-              className={`
-                 mt-4 w-full py-4 text-sm sm:text-base rounded-lg text-white 
-                  transition ${
-                answered
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-blue-600 opacity-50 cursor-not-allowed"
-              }
-              `}
-            >
-              {percentDone === 100 ? "Ergebnis anzeigen" : "Nächste Frage"}
-            </button>
+            {answered && (
+              <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+                {question.options.find((opt) => opt.id === selected)?.isCorrect
+                  ? "Richtig. Diese Frage zählt als ein Schritt Richtung beherrscht."
+                  : "Nicht richtig. Die korrekte Antwort ist markiert."}
+              </div>
+            )}
           </div>
+        </Card>
+      </Page>
+
+      <div className="fixed inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+        <div className="mx-auto max-w-2xl">
+          <Button
+            type="button"
+            onClick={handleNext}
+            disabled={!answered}
+            fullWidth
+          >
+            {percentDone === 100 ? "Ergebnis anzeigen" : "Nächste Frage"}
+          </Button>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

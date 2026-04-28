@@ -4,6 +4,8 @@ import { licenses } from "../data/licenses.ts";
 import { examConfigs } from "../data/examConfigs.ts";
 import Header from "../components/Header.tsx";
 import Footer from "../components/Footer.tsx";
+import Card from "../components/Card.tsx";
+import Page from "../components/Page.tsx";
 
 const ExamSelectionPage: React.FC = () => {
 	const { licenseId } = useParams<{ licenseId: string }>();
@@ -23,12 +25,12 @@ const ExamSelectionPage: React.FC = () => {
 	const configs = examConfigs[licenseId!] || [];
 
 	return (
-		<div className="min-h-screen bg-gray-50 flex flex-col">
+		<div className="min-h-screen bg-slate-50 flex flex-col">
 			<Header
 				title={`${license.name} – Prüfungsmodus`}
 				backTo={`/${licenseId}`}
 			/>
-			<main className="container max-w-xl w-full mx-auto flex-grow px-4 py-8 space-y-6">
+			<Page footer={<Footer />} contentClassName="gap-4">
 				{configs.length === 0
 					? <p>Für diese Lizenz sind keine Prüfungen definiert.</p>
 					: (
@@ -36,21 +38,30 @@ const ExamSelectionPage: React.FC = () => {
 							<Link
 								to={`/${licenseId}/exam/${exam.id}`}
 								key={exam.id}
-								className="block bg-white p-6 rounded-lg shadow hover:shadow-lg transition"
+								className="block"
 							>
-								<div className="flex justify-between items-center">
-									<h3 className="font-semibold">
-										{exam.title}
-									</h3>
-									<span className="text-sm text-gray-500">
-										{exam.duration} Min
-									</span>
-								</div>
+								<Card interactive className="p-5">
+									<div className="flex justify-between gap-4">
+										<div>
+											<h3 className="font-semibold">
+												{exam.title}
+											</h3>
+											<p className="mt-1 text-sm text-slate-500">
+												{exam.requirements.reduce(
+													(sum, req) => sum + req.count,
+													0,
+												)} Fragen
+											</p>
+										</div>
+										<span className="shrink-0 text-sm font-semibold text-blue-700">
+											{exam.duration} Min
+										</span>
+									</div>
+								</Card>
 							</Link>
 						))
 					)}
-			</main>
-			<Footer />
+			</Page>
 		</div>
 	);
 };

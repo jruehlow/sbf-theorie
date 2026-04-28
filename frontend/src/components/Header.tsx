@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaChevronLeft } from "react-icons/fa";
+import { FaChevronLeft, FaRotateRight } from "react-icons/fa6";
 
 interface HeaderProps {
   title: string;
@@ -19,31 +19,37 @@ const Header: React.FC<HeaderProps> = ({
   resetText = "Reset",
   resetButtonClassName,
 }) => (
-  <header className="bg-blue-600 text-white py-4">
-    <div className="container px-2 flex items-center justify-center relative h-6">
+  <header className="sticky top-0 z-10 border-b border-blue-800 bg-blue-700 text-white shadow-sm">
+    <div className="mx-auto grid h-14 w-full max-w-2xl grid-cols-[auto_1fr_auto] items-center gap-2 px-3">
       {backTo && (
         <Link
           to={backTo}
-          className="absolute left-2 flex items-center text-white hover:opacity-80"
+          className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-white hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
-          <FaChevronLeft className="w-5 h-5 mr-2" />
-          {backText}
+          <FaChevronLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">{backText}</span>
         </Link>
       )}
+      {!backTo && <div />}
 
-      <h1 className="text-l font-semibold text-white">{title}</h1>
+      <h1 className="truncate text-center text-base font-semibold text-white sm:text-lg">
+        {title}
+      </h1>
 
       {onReset && (
         <button
-          type="reset"
+          type="button"
           onClick={onReset}
-          className={`absolute right-2 ` +
+          title={resetText}
+          className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-2 ` +
             (resetButtonClassName ??
-              "text-sm text-red-200 hover:text-red-100")}
+              "text-sm font-semibold text-blue-100 hover:bg-blue-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white")}
         >
-          {resetText}
+          <FaRotateRight className="h-4 w-4" />
+          <span className="hidden sm:inline">{resetText}</span>
         </button>
       )}
+      {!onReset && <div />}
     </div>
   </header>
 );

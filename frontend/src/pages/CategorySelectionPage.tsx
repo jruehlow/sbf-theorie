@@ -1,16 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { categoriesByLicense } from "../data/categories.ts";
 import { licenses } from "../data/licenses.ts";
 import Footer from "../components/Footer.tsx";
 import Header from "../components/Header.tsx";
+import Card from "../components/Card.tsx";
+import Page from "../components/Page.tsx";
+import ProgressBar from "../components/ProgressBar.tsx";
 
-type ProgressMap = Record<string, number>;
+type ProgressData = {
+  percent: number;
+  mastered: number;
+};
+
+type ProgressMap = Record<string, ProgressData>;
 
 const CategorySelectionPage: React.FC = () => {
   const { licenseId } = useParams<{ licenseId: string }>();
   const license = licenses.find((l) => l.id === licenseId);
-  const categories = licenseId ? categoriesByLicense[licenseId] || [] : [];
+  const categories = useMemo(
+    () => licenseId ? categoriesByLicense[licenseId] || [] : [],
+    [licenseId],
+  );
 
   const [progressMap, setProgressMap] = useState<ProgressMap>({});
 
@@ -22,6 +33,7 @@ const CategorySelectionPage: React.FC = () => {
       const key = `quiz-progress-${licenseId}-${cat.id}`;
       const json = localStorage.getItem(key);
       let pct = 0;
+      let mastered = 0;
 
       if (json) {
         try {
@@ -35,14 +47,17 @@ const CategorySelectionPage: React.FC = () => {
             (sum, { count }) => sum + Math.min(count, 3),
             0,
           );
+          mastered = Object.values(reviews).filter(({ count }) => count >= 3)
+            .length;
 
           pct = total > 0 ? Math.round((done / total) * 100) : 0;
         } catch {
           pct = 0;
+          mastered = 0;
         }
       }
 
-      m[cat.id] = pct;
+      m[cat.id] = { percent: pct, mastered };
     });
 
     setProgressMap(m);
@@ -60,61 +75,68 @@ const CategorySelectionPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header title={license.name} backTo="/licenses" />
 
-      <main className="container max-w-xl w-full mx-auto flex-grow px-4 py-8 space-y-6">
-        {/* Normal categories */}
+      <Page footer={<Footer />} contentClassName="gap-4">
         {categories.map((cat) => {
-          const progress = progressMap[cat.id] || 0;
+          const progress = progressMap[cat.id] || {
+            percent: 0,
+            mastered: 0,
+          };
           return (
             <Link
               to={`/${licenseId}/${cat.id}/quiz`}
               key={cat.id}
-              className="
-                block bg-white p-6 rounded-lg shadow
-                transform hover:shadow-lg hover:-translate-y-0.5
-                transition
-              "
+              className="block"
             >
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="font-semibold text-lg">
-                  {cat.name}
-                </h2>
-                <span className="text-sm text-gray-500">
-                  {cat.questionCount} Fragen
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 h-2 rounded overflow-hidden">
-                <div
-                  className={`
-                    h-2 rounded ${
-                    progress === 100 ? "bg-green-500" : "bg-blue-600"
-                  }
-                  `}
-                  style={{ width: `${progress}%` }}
+              <Card interactive className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-semibold text-lg">
+                      {cat.name}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {progress.mastered} / {cat.questionCount} Fragen
+                      beherrscht
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-blue-700">
+                    {progress.percent}%
+                  </span>
+                </div>
+                <ProgressBar
+                  value={progress.percent}
+                  tone={progress.percent === 100 ? "green" : "blue"}
+                  className="mt-4"
                 />
-              </div>
-              <p className="mt-1 text-sm text-gray-600">
-                {progress}% beherrscht
-              </p>
+              </Card>
             </Link>
           );
         })}
-        {/* Prüfungsmodus link */}
         {licenseId === "sbf-binnen" && (
           <Link
             to={`/${licenseId}/exam`}
-            className="block bg-yellow-50 p-6 rounded-lg shadow hover:shadow-lg transition"
+            className="block"
           >
-            <h2 className="font-semibold text-lg">Prüfungsmodus</h2>
-            <p className="text-sm text-gray-600">
-              Simuliere eine echte Prüfung mit Zeitlimit
-            </p>
+            <Card interactive className="border-amber-200 bg-amber-50 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="font-semibold text-lg text-amber-950">
+                    Prüfungsmodus
+                  </h2>
+                  <p className="mt-1 text-sm text-amber-800">
+                    Simuliere eine echte Prüfung mit Zeitlimit.
+                  </p>
+                </div>
+                <span className="text-sm font-semibold text-amber-800">
+                  Start
+                </span>
+              </div>
+            </Card>
           </Link>
         )}
-      </main>
-      <Footer />
+      </Page>
     </div>
   );
 };
