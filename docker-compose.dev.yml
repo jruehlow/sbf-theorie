@@ -28,6 +28,7 @@ services:
     volumes:
       - ./frontend:/app:delegated    # your source → container
       - /app/node_modules           # keep node_modules inside container
+      - ./questions/media:/app/public/media:ro
     ports:
       - "5173:5173"
     expose:

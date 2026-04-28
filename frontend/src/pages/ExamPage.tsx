@@ -10,6 +10,7 @@ import Button from "../components/Button.tsx";
 import Card from "../components/Card.tsx";
 import Page from "../components/Page.tsx";
 import ProgressBar from "../components/ProgressBar.tsx";
+import ZoomableImage from "../components/ZoomableImage.tsx";
 
 async function fetchQuestions(
 	licenseId: string,
@@ -209,7 +210,7 @@ const ExamPage: React.FC = () => {
 					</h2>
 					{currentQ.image && (
 						<div className="my-4">
-							<img
+							<ZoomableImage
 								src={`/${currentQ.image}`}
 								alt="Illustration zur Frage"
 								className="mx-auto max-h-48 rounded object-contain"

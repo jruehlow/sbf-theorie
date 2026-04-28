@@ -10,6 +10,7 @@ import Button from "../components/Button.tsx";
 import Card from "../components/Card.tsx";
 import Page from "../components/Page.tsx";
 import ProgressBar from "../components/ProgressBar.tsx";
+import ZoomableImage from "../components/ZoomableImage.tsx";
 
 interface ReviewData {
   count: number; // consecutive correct answers
@@ -313,7 +314,7 @@ const QuizPage: React.FC = () => {
 
             {question.image && (
               <div className="text-center my-4">
-                <img
+                <ZoomableImage
                   src={`/${question.image}`}
                   alt="Illustration zur Frage"
                   className=" block mx-auto w-auto h-auto max-w-[80vw] sm:max-w-md max-h-32 sm:max-h-48 object-contain rounded"
